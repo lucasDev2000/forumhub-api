@@ -1,210 +1,208 @@
-# FórumHub API
+# ForumHub API
 
 API REST desenvolvida em **Java + Spring Boot** para gerenciamento de tópicos de um fórum.
-
-Este projeto foi desenvolvido como parte do **Challenge Back-End da Alura + Oracle ONE**.
+O projeto implementa autenticação segura utilizando **Spring Security e JWT**, além de persistência em banco de dados **MySQL** com **Flyway** para controle de migrations.
 
 ---
 
 # Tecnologias utilizadas
 
-- Java 17
-- Spring Boot 3
-- Spring Web
-- Spring Data JPA
-- Spring Validation
-- Flyway Migration
-- MySQL
-- Docker
-- Maven
-- Spring Security
+* Java 17+
+* Spring Boot
+* Spring Web
+* Spring Data JPA
+* Spring Security
+* JWT (Auth0 Java JWT)
+* MySQL
+* Flyway
+* Maven
+* Docker
 
 ---
 
 # Arquitetura do projeto
 
-backend
+```
+src/main/java/br/com/forumhub/forumhub
 
-controller  
-TopicoController
+controller
+├── AuthController
+└── TopicoController
 
-domain  
-Topico  
-TopicoRepository
+domain
+├── topico
+│   ├── Topico
+│   └── TopicoRepository
+└── usuario
+    ├── Usuario
+    ├── UsuarioRepository
+    └── dto
+        └── DadosLogin
 
-dto  
-DadosCadastroTopico  
-DadosAtualizacaoTopico
-
-infra/security  
-SecurityConfig
-
-resources  
-application.properties  
-db/migration  
-V1__create_table_topicos.sql
+infra/security
+├── SecurityConfig
+├── SecurityFilter
+├── TokenService
+└── AuthenticationService
+```
 
 ---
 
 # Banco de dados
 
-Tabela principal: **topicos**
+O projeto utiliza **MySQL**.
 
-| Campo | Tipo |
-|------|------|
-| id | Long |
-| titulo | String |
-| mensagem | Text |
-| data_criacao | LocalDateTime |
-| estado | String |
-| autor | String |
-| curso | String |
+As migrations são controladas pelo **Flyway**.
 
----
+```
+resources/db.migration
 
-# Como executar o projeto
-
-## Subir o banco de dados com Docker
-
-Na raiz do projeto execute:
-
-docker compose up -d
+V1_create_table_topicos.sql
+V2_create_table_usuarios.sql
+```
 
 ---
 
-## Executar a API
+# Rodando o projeto
 
-Entre na pasta backend:
+### 1 Clonar repositório
 
-cd backend
+```bash
+git clone https://github.com/seuusuario/forumhub-api.git
+cd forumhub-api
+```
 
-Execute:
+---
 
+### 2 Subir banco com Docker
+
+```bash
+docker run -d \
+--name forumhub-mysql \
+-e MYSQL_ROOT_PASSWORD=root \
+-e MYSQL_DATABASE=forumhub \
+-p 3306:3306 \
+mysql:8
+```
+
+---
+
+### 3 Rodar aplicação
+
+```bash
 ./mvnw spring-boot:run
+```
 
-A API estará disponível em:
+A API ficará disponível em:
 
+```
 http://localhost:8080
+```
+
+---
+
+# Autenticação JWT
+
+A autenticação da API é feita utilizando **JWT (JSON Web Token)**.
+
+### Endpoint de login
+
+```
+POST /login
+```
+
+Body:
+
+```json
+{
+ "login": "lucas",
+ "senha": "123456"
+}
+```
+
+Resposta:
+
+```
+TOKEN JWT
+```
+
+---
+
+# Usando o token
+
+Após obter o token, ele deve ser enviado no header das próximas requisições:
+
+```
+Authorization: Bearer SEU_TOKEN
+```
+
+Exemplo:
+
+```bash
+curl http://localhost:8080/topicos \
+-H "Authorization: Bearer SEU_TOKEN"
+```
 
 ---
 
 # Endpoints da API
 
-## Criar tópico
+### Criar tópico
 
+```
 POST /topicos
-
-Exemplo de requisição:
-
-{
-"titulo": "Duvida Java",
-"mensagem": "Como funciona Spring Boot?",
-"autor": "Lucas",
-"curso": "Spring Boot"
-}
+```
 
 ---
 
-## Listar tópicos
+### Listar tópicos
 
+```
 GET /topicos
-
-Com paginação:
-
-GET /topicos?page=0&size=10
-
-Filtro opcional:
-
-GET /topicos?curso=Spring Boot
-
-ou
-
-GET /topicos?curso=Spring Boot&ano=2026
+```
 
 ---
 
-## Detalhar tópico
+### Atualizar tópico
 
-GET /topicos/{id}
-
-Exemplo:
-
-GET /topicos/1
-
----
-
-## Atualizar tópico
-
+```
 PUT /topicos/{id}
-
-Exemplo:
-
-{
-"titulo": "Nova dúvida",
-"mensagem": "Como funciona REST no Spring?",
-"autor": "Lucas",
-"curso": "Spring Boot"
-}
+```
 
 ---
 
-## Excluir tópico
+### Deletar tópico
 
+```
 DELETE /topicos/{id}
-
-Resposta esperada:
-
-204 No Content
+```
 
 ---
 
-# Teste rápido com curl
+# Testando a API
 
-Criar tópico:
+Os testes podem ser feitos com ferramentas de API:
 
-curl -i -X POST http://localhost:8080/topicos \
--H "Content-Type: application/json" \
--d '{"titulo":"Duvida","mensagem":"Como faço POST?","autor":"Lucas","curso":"Spring Boot"}'
-
-Listar tópicos:
-
-curl http://localhost:8080/topicos
-
-Detalhar tópico:
-
-curl http://localhost:8080/topicos/1
-
-Atualizar tópico:
-
-curl -i -X PUT http://localhost:8080/topicos/1 \
--H "Content-Type: application/json" \
--d '{"titulo":"Nova dúvida","mensagem":"Teste update","autor":"Lucas","curso":"Spring Boot"}'
-
-Excluir tópico:
-
-curl -i -X DELETE http://localhost:8080/topicos/1
+* Postman
+* Insomnia
+* Curl
 
 ---
 
-# Funcionalidades implementadas
+# Segurança
 
-- Cadastro de tópicos
-- Listagem de tópicos
-- Paginação
-- Filtro por curso e ano
-- Detalhamento de tópico
-- Atualização de tópico
-- Exclusão de tópico
-- Validação de dados
-- Bloqueio de tópicos duplicados
-- Migrations com Flyway
-- Persistência com Spring Data JPA
-- Banco MySQL com Docker
+A API implementa:
+
+* Spring Security
+* Autenticação via JWT
+* API stateless
+* Filtro de autenticação por token
+* Proteção de endpoints
 
 ---
 
 # Autor
 
-Lucas
+Projeto desenvolvido para o desafio **Oracle Next Education + Alura**.
 
-Projeto desenvolvido para estudos no programa **Oracle Next Education + Alura**.
+Lucas
